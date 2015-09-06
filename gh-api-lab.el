@@ -235,10 +235,10 @@ PRERELEASE represents the status of prerelease or not."
       (gh-api-lab-execute-query gh-api-lab--access-token)))
 
 ;; list releases
-(gh-api-lab-list-releases "ardumont" "gh-api-lab")
+;; (gh-api-lab-list-releases "ardumont" "gh-api-lab")
 
 ;; create new releases
-(gh-api-lab-create-release "ardumont" "gh-api-lab" "0.0.0.2" "master" "second dummy release" "this is the first release from emacs' repl" t)
+;; (gh-api-lab-create-release "ardumont" "gh-api-lab" "0.0.0.2" "master" "second dummy release" "this is the first release from emacs' repl" t)
 
 (provide 'gh-api-lab)
 ;;; gh-api-lab.el ends here
