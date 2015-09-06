@@ -1,0 +1,12 @@
+#+title: gh-api-lab
+#+author: ardumont
+
+* Description
+
+Tinkering with a subset of github's actual api.
+Release oriented.
+
+* Rationale
+
+I'm maintaining quite a few packages and almost all deployment is fully automated except for releasing on github...
+I'd like to make the last step and discover a little about github's api along the way.
