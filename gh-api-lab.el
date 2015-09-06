@@ -35,7 +35,7 @@
   "Compute the base http url from URI."
   (format "https://api.github.com%s" uri) )
 
-(defvar gh-api-lab--access-token-file "~/.emacs.d/.gh-api-lab/token"
+(defvar gh-api-lab--access-token-file "~/.emacs.d/.github/token"
   "Access-token file containing only the token to access the api.
 This is installed manually.")
 
