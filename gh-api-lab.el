@@ -139,6 +139,20 @@ Simply displays a success message in the minibuffer."
               :success 'gh-api-lab--success-callback
               :error   'gh-api-lab--error-callback)))
 
+(defun gh-api-lab--delete (uri params &optional token)
+  "Post to URI with PARAMS and DATA with TOKEN."
+  (let ((default-headers '(("Content-type" . "application/json"))))
+    `(request ,uri
+              :sync    t
+              :type    "DELETE"
+              :params  ,params
+              :headers (quote ,(if token
+                                   (cons `("Authorization" . ,(format "token %s" token)) default-headers)
+                                 default-headers))
+              :parser  'json-read
+              :success 'gh-api-lab--success-callback
+              :error   'gh-api-lab--error-callback)))
+
 (defun gh-api-lab-make-properties (properties)
   "Return a hash-table from PROPERTIES key/values."
   (--reduce-from (orgtrello-hash-puthash-data (car it) (cdr it) acc)
@@ -154,8 +168,12 @@ Optional TOKEN for authentication."
          (full-uri (gh-api-lab--base-http uri))
          (method (gethash :method query)))
     (eval
-     (cond ((string= method "GET") (gh-api-lab--get full-uri params token))
-           ((string= method "POST") (gh-api-lab--post full-uri params body token))
+     (cond ((string= method "GET")
+            (gh-api-lab--get full-uri params token))
+           ((string= method "POST")
+            (gh-api-lab--post full-uri params body token))
+           ((string= method "DELETE")
+            (gh-api-lab--delete full-uri params token))
            (t nil)))))
 
 (defun gh-api-lab-make-query (uri method &optional body params)
@@ -167,7 +185,7 @@ Optional TOKEN for authentication."
     (puthash :params params h)
     h))
 
-(defun gh-api-lab-api-release (owner repo tag branch desc body &optional draft prerelease)
+(defun gh-api-lab-api-create-release (owner repo tag branch desc body &optional draft prerelease)
   "Create the api release call.
 OWNER owner of the repository REPO.
 TAG is the tag to create on BRANCH
@@ -179,11 +197,15 @@ PRERELEASE represents the status of prerelease or not."
                          "POST"
                          (gh-api-lab-create-release-json tag branch desc body)))
 
-
 (defun gh-api-lab-get-releases (owner repo)
   "Create the api release query to list the releases of the OWNER/REPO."
   (gh-api-lab-make-query (format "/repos/%s/%s/releases" owner repo)
                          "GET"))
+
+(defun gh-api-lab-delete-release-query (owner repo release-id)
+  "Create the delete release api query using OWNER REPO and RELEASE-ID."
+  (gh-api-lab-make-query (format "/repos/%s/%s/releases/%s" owner repo release-id)
+                         "DELETE"))
 
 (require 'dash)
 
@@ -231,8 +253,122 @@ DESC is the summary on the release.
 BODY is the long description of the release.
 DRAFT represents the status of draft or not.
 PRERELEASE represents the status of prerelease or not."
-  (-> (gh-api-lab-api-release owner repo tag branch desc body draft prerelease)
+  (-> (gh-api-lab-api-create-release owner repo tag branch desc body draft prerelease)
       (gh-api-lab-execute-query gh-api-lab--access-token)))
+
+(defun gh-api-lab-delete-release (owner repo id)
+  "Given an OWNER/REPO and release ID, delete such release."
+  (-> (gh-api-lab-delete-release-query owner repo id)
+      (gh-api-lab-execute-query gh-api-lab--access-token)))
+
+;; retrieve id from output
+;; (assoc-default 'id '((body . "this is the first release from emacs' repl")
+;;                      (zipball_url . "https://api.github.com/repos/ardumont/gh-api-lab/zipball/0.0.0.2")
+;;                      (tarball_url . "https://api.github.com/repos/ardumont/gh-api-lab/tarball/0.0.0.2")
+;;                      (assets .
+;;                              [])
+;;                      (published_at . "2015-09-06T20:12:15Z")
+;;                      (created_at . "2015-09-06T19:40:24Z")
+;;                      (prerelease . :json-false)
+;;                      (author
+;;                       (site_admin . :json-false)
+;;                       (type . "User")
+;;                       (received_events_url . "https://api.github.com/users/ardumont/received_events")
+;;                       (events_url . "https://api.github.com/users/ardumont/events{/privacy}")
+;;                       (repos_url . "https://api.github.com/users/ardumont/repos")
+;;                       (organizations_url . "https://api.github.com/users/ardumont/orgs")
+;;                       (subscriptions_url . "https://api.github.com/users/ardumont/subscriptions")
+;;                       (starred_url . "https://api.github.com/users/ardumont/starred{/owner}{/repo}")
+;;                       (gists_url . "https://api.github.com/users/ardumont/gists{/gist_id}")
+;;                       (following_url . "https://api.github.com/users/ardumont/following{/other_user}")
+;;                       (followers_url . "https://api.github.com/users/ardumont/followers")
+;;                       (html_url . "https://github.com/ardumont")
+;;                       (url . "https://api.github.com/users/ardumont")
+;;                       (gravatar_id . "")
+;;                       (avatar_url . "https://avatars.githubusercontent.com/u/718812?v=3")
+;;                       (id . 718812)
+;;                       (login . "ardumont"))
+;;                      (draft . :json-false)
+;;                      (name . "second dummy release")
+;;                      (target_commitish . "master")
+;;                      (tag_name . "0.0.0.2")
+;;                      (id . 1775274)
+;;                      (html_url . "https://github.com/ardumont/gh-api-lab/releases/tag/0.0.0.2")
+;;                      (upload_url . "https://uploads.github.com/repos/ardumont/gh-api-lab/releases/1775274/assets{?name}")
+;;                      (assets_url . "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775274/assets")
+;;                      (url . "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775274")))
+
+;; (-map (-partial 'assoc-default 'id)
+;;       [((body . "this is the first release from emacs' repl")
+;;         (zipball_url . "https://api.github.com/repos/ardumont/gh-api-lab/zipball/0.0.0.2")
+;;         (tarball_url . "https://api.github.com/repos/ardumont/gh-api-lab/tarball/0.0.0.2")
+;;         (assets .
+;;                 [])
+;;         (published_at . "2015-09-06T20:12:15Z")
+;;         (created_at . "2015-09-06T19:40:24Z")
+;;         (prerelease . :json-false)
+;;         (author
+;;          (site_admin . :json-false)
+;;          (type . "User")
+;;          (received_events_url . "https://api.github.com/users/ardumont/received_events")
+;;          (events_url . "https://api.github.com/users/ardumont/events{/privacy}")
+;;          (repos_url . "https://api.github.com/users/ardumont/repos")
+;;          (organizations_url . "https://api.github.com/users/ardumont/orgs")
+;;          (subscriptions_url . "https://api.github.com/users/ardumont/subscriptions")
+;;          (starred_url . "https://api.github.com/users/ardumont/starred{/owner}{/repo}")
+;;          (gists_url . "https://api.github.com/users/ardumont/gists{/gist_id}")
+;;          (following_url . "https://api.github.com/users/ardumont/following{/other_user}")
+;;          (followers_url . "https://api.github.com/users/ardumont/followers")
+;;          (html_url . "https://github.com/ardumont")
+;;          (url . "https://api.github.com/users/ardumont")
+;;          (gravatar_id . "")
+;;          (avatar_url . "https://avatars.githubusercontent.com/u/718812?v=3")
+;;          (id . 718812)
+;;          (login . "ardumont"))
+;;         (draft . :json-false)
+;;         (name . "second dummy release")
+;;         (target_commitish . "master")
+;;         (tag_name . "0.0.0.2")
+;;         (id . 1775274)
+;;         (html_url . "https://github.com/ardumont/gh-api-lab/releases/tag/0.0.0.2")
+;;         (upload_url . "https://uploads.github.com/repos/ardumont/gh-api-lab/releases/1775274/assets{?name}")
+;;         (assets_url . "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775274/assets")
+;;         (url . "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775274"))
+;;        ((body . "this is the first release from emacs' repl")
+;;         (zipball_url . "https://api.github.com/repos/ardumont/gh-api-lab/zipball/0.0.0.1")
+;;         (tarball_url . "https://api.github.com/repos/ardumont/gh-api-lab/tarball/0.0.0.1")
+;;         (assets .
+;;                 [])
+;;         (published_at . "2015-09-06T20:09:42Z")
+;;         (created_at . "2015-09-06T19:40:24Z")
+;;         (prerelease . :json-false)
+;;         (author
+;;          (site_admin . :json-false)
+;;          (type . "User")
+;;          (received_events_url . "https://api.github.com/users/ardumont/received_events")
+;;          (events_url . "https://api.github.com/users/ardumont/events{/privacy}")
+;;          (repos_url . "https://api.github.com/users/ardumont/repos")
+;;          (organizations_url . "https://api.github.com/users/ardumont/orgs")
+;;          (subscriptions_url . "https://api.github.com/users/ardumont/subscriptions")
+;;          (starred_url . "https://api.github.com/users/ardumont/starred{/owner}{/repo}")
+;;          (gists_url . "https://api.github.com/users/ardumont/gists{/gist_id}")
+;;          (following_url . "https://api.github.com/users/ardumont/following{/other_user}")
+;;          (followers_url . "https://api.github.com/users/ardumont/followers")
+;;          (html_url . "https://github.com/ardumont")
+;;          (url . "https://api.github.com/users/ardumont")
+;;          (gravatar_id . "")
+;;          (avatar_url . "https://avatars.githubusercontent.com/u/718812?v=3")
+;;          (id . 718812)
+;;          (login . "ardumont"))
+;;         (draft . :json-false)
+;;         (name . "first release")
+;;         (target_commitish . "master")
+;;         (tag_name . "0.0.0.1")
+;;         (id . 1775272)
+;;         (html_url . "https://github.com/ardumont/gh-api-lab/releases/tag/0.0.0.1")
+;;         (upload_url . "https://uploads.github.com/repos/ardumont/gh-api-lab/releases/1775272/assets{?name}")
+;;         (assets _url . "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775272/assets")
+;;         (url . "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775272"))])
 
 ;; list releases
 ;; (gh-api-lab-list-releases "ardumont" "gh-api-lab")

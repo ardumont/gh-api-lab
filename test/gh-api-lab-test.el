@@ -75,6 +75,31 @@
                      :error 'gh-api-lab--error-callback)
            (gh-api-lab--get "uri" '(("a" . "b")) 'token))))
 
+
+(ert-deftest test-gh-api-lab--delete ()
+  (should (equal
+           '(request "uri"
+                     :sync t
+                     :type "DELETE"
+                     :params (("a" . "b"))
+                     :headers '(("Content-type" . "application/json"))
+                     :parser 'json-read
+                     :success 'gh-api-lab--success-callback
+                     :error 'gh-api-lab--error-callback)
+           (gh-api-lab--delete "uri" '(("a" . "b")))))
+  (should (equal
+           '(request "uri"
+                     :sync t
+                     :type "DELETE"
+                     :params (("a" . "b"))
+                     :headers '(("Authorization" . "token token")
+                                ("Content-type" . "application/json"))
+                     :parser 'json-read
+                     :success 'gh-api-lab--success-callback
+                     :error 'gh-api-lab--error-callback)
+           (gh-api-lab--delete "uri" '(("a" . "b")) 'token))))
+
+
 (ert-deftest test-gh-api-lab-execute-query ()
   (should (eq 2
               (with-mock
@@ -102,19 +127,19 @@
   (should (equal "params" (gethash :params (gh-api-lab-make-query "uri" "method" "body" "params"))))
   (should-not (gethash :params (gh-api-lab-make-query "uri" "method" "body"))))
 
-(ert-deftest test-gh-api-lab-api-release ()
+(ert-deftest test-gh-api-lab-api-create-release ()
   (should (equal "/repos/:owner/:repo/releases"
                  (gethash :uri (with-mock
                                  (mock (gh-api-lab-create-release-json :tag :branch :desc :body) => "body")
-                                 (gh-api-lab-api-release :owner :repo :tag :branch :desc :body)))))
+                                 (gh-api-lab-api-create-release :owner :repo :tag :branch :desc :body)))))
   (should (equal "POST"
                  (gethash :method (with-mock
                                     (mock (gh-api-lab-create-release-json :tag :branch :desc :body) => "body")
-                                    (gh-api-lab-api-release :owner :repo :tag :branch :desc :body)))))
+                                    (gh-api-lab-api-create-release :owner :repo :tag :branch :desc :body)))))
   (should (equal "body"
                  (gethash :body (with-mock
                                   (mock (gh-api-lab-create-release-json :tag :branch :desc :body) => "body")
-                                  (gh-api-lab-api-release :owner :repo :tag :branch :desc :body))))))
+                                  (gh-api-lab-api-create-release :owner :repo :tag :branch :desc :body))))))
 
 (ert-deftest test-gh-api-lab-create-release-json ()
   (should (equal '(("body" . "body") ("name" . "desc") ("target_commitish" . "branch") ("tag_name" . "tag"))
@@ -128,6 +153,19 @@
   (should-not (gethash :body (gh-api-lab-get-releases "user" "repo")))
   (should-not (gethash :params (gh-api-lab-get-releases "user" "repo"))))
 
+
+(ert-deftest test-gh-api-lab-delete-release-query ()
+  (should (equal "/repos/:owner/:repo/releases/:id" (gethash :uri (gh-api-lab-delete-release-query :owner :repo :id))))
+  (should (equal "DELETE" (gethash :method (gh-api-lab-delete-release-query :owner :repo :id))))
+  (should-not (gethash :body (gh-api-lab-delete-release-query :owner :repo :id)))
+  (should-not (gethash :params (gh-api-lab-delete-release-query :owner :repo :id))))
+
+(ert-deftest test-gh-api-lab-delete-release ()
+  (should (eq :delete-done
+              (with-mock
+                (mock (gh-api-lab-delete-release-query :owner :repo :id) => :delete-query)
+                (mock (gh-api-lab-execute-query :delete-query gh-api-lab--access-token) => :delete-done)
+                (gh-api-lab-delete-release :owner :repo :id)))))
 
 (provide 'gh-api-lab-test)
 ;;; gh-api-lab-test.el ends here
