@@ -99,26 +99,57 @@
                      :error 'gh-api-lab--error-callback)
            (gh-api-lab--delete "uri" '(("a" . "b")) 'token))))
 
+(require 'dash)
+(defun gh-api-lab-hash-make-properties (properties)
+  "Return a hash-table from PROPERTIES key/values."
+  (defun gh-api-lab-hash-empty-hash ()
+    "Empty hash table with test 'equal."
+    (make-hash-table :test 'equal))
+  (defun gh-api-lab-hash-puthash-data (key value entity)
+    "Update at KEY the VALUE in the ENTITY map.
+Return the entity updated or nil if the entity is nil."
+    (when entity
+      (puthash key value entity)
+      entity))
+  (--reduce-from (gh-api-lab-hash-puthash-data (car it) (cdr it) acc)
+                 (gh-api-lab-hash-empty-hash)
+                 properties))
 
 (ert-deftest test-gh-api-lab-execute-query ()
+  (should (eq 1
+              (with-mock
+                (mock (gh-api-lab--base-http :some-uri) => "uri")
+                (mock (gh-api-lab--get "uri" :some-params :token) => '(+ 1 0))
+                (gh-api-lab-execute-query
+                 (gh-api-lab-hash-make-properties '((:uri . :some-uri)
+                                                    (:params . :some-params)
+                                                    (:method . "GET")))
+                 :token))))
   (should (eq 2
               (with-mock
-                (mock (gh-api-lab--post "https://api.github.com/repos/ardumont/gh-api-lab/releases"
-                                        nil
-                                        '(("body" . "release notes should be here")
-                                          ("name" . "first tryout")
-                                          ("target_commitish" . "master")
-                                          ("tag_name" . "0.0.0.1"))
-                                        'token) => '(+ 1 1))
+                (mock (gh-api-lab--base-http :some-uri) => "uri")
+                (mock (gh-api-lab--post "uri" :some-params :some-body :token) => '(+ 1 1))
                 (gh-api-lab-execute-query
-                 (gh-api-lab-api-create-release-query "ardumont" "gh-api-lab"
-                                                      "0.0.0.1"
-                                                      "master"
-                                                      "first tryout"
-                                                      "release notes should be here"
-                                                      t)
-
-                 'token)))))
+                 (gh-api-lab-hash-make-properties '((:uri . :some-uri)
+                                                    (:params . :some-params)
+                                                    (:method . "POST")
+                                                    (:body . :some-body)))
+                 :token))))
+  (should (eq 3
+              (with-mock
+                (mock (gh-api-lab--base-http :some-uri) => "uri")
+                (mock (gh-api-lab--delete "uri" :some-params :token) => '(+ 1 2))
+                (gh-api-lab-execute-query
+                 (gh-api-lab-hash-make-properties '((:uri . :some-uri)
+                                                    (:params . :some-params)
+                                                    (:method . "DELETE")))
+                 :token))))
+  (should-error (gh-api-lab-execute-query
+                 (gh-api-lab-hash-make-properties '((:uri . :some-uri)
+                                                    (:params . :some-params)
+                                                    (:method . "unknown")))
+                 :token)
+                :type 'error))
 
 (ert-deftest test-gh-api-lab-make-query ()
   (should (equal "uri" (gethash :uri (gh-api-lab-make-query "uri" "method" "body" "params"))))

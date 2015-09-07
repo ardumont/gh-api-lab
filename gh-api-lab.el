@@ -164,17 +164,16 @@ Simply displays a success message in the minibuffer."
 Optional TOKEN for authentication."
   (let* ((uri (gethash :uri query))
          (params (gethash :params query))
-         (body (gethash :body query))
-         (full-uri (gh-api-lab--base-http uri))
-         (method (gethash :method query)))
+         (method (gethash :method query))
+         (full-uri (gh-api-lab--base-http uri)))
     (eval
      (cond ((string= method "GET")
             (gh-api-lab--get full-uri params token))
            ((string= method "POST")
-            (gh-api-lab--post full-uri params body token))
+            (gh-api-lab--post full-uri params (gethash :body query) token))
            ((string= method "DELETE")
             (gh-api-lab--delete full-uri params token))
-           (t nil)))))
+           (t (throw 'error 'dev-error))))))
 
 (defun gh-api-lab-make-query (uri method &optional body params)
   "Make a generic query from URI, METHOD, BODY and PARAMS."
@@ -373,8 +372,24 @@ PRERELEASE represents the status of prerelease or not."
 ;; list releases
 ;; (gh-api-lab-list-releases "ardumont" "gh-api-lab")
 
+;; ELISP> (->> (gh-api-lab-list-releases "ardumont" "gh-api-lab")
+;;             request-response-data
+;;             (-map (-partial 'assoc-default 'id)))
+;; (1775272)
+
 ;; create new releases
 ;; (gh-api-lab-create-release "ardumont" "gh-api-lab" "0.0.0.2" "master" "second dummy release" "this is the first release from emacs' repl" t)
+
+;; ELISP> (gh-api-lab-delete-release "ardumont" "gh-api-lab" 1775274)
+;; [cl-struct-request-response 204 nil nil
+;;                             (end-of-file)
+;;                             parse-error "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775274" t
+;;                             (:sync t :type "DELETE" :params nil :headers
+;;                                    (("Authorization" . "token <token>")
+;;                                     ("Content-type" . "application/json"))
+;;                                    :parser json-read :success gh-api-lab--success-callback :error gh-api-lab--error-callback :url "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775274" :response #0)
+;;                             #<killed buffer> "HTTP/1.1 204 No Content\nServer: GitHub.com\nDate: Mon, 07 Sep 2015 11:09:32 GMT\nStatus: 204 No Content\nX-RateLimit-Limit: 5000\nX-RateLimit-Remaining: 4994\nX-RateLimit-Reset: 1441627619\nX-OAuth-Scopes: repo\nX-Accepted-OAuth-Scopes: \nX-GitHub-Media-Type: github.v3\nX-XSS-Protection: 1; mode=block\nX-Frame-Options: deny\nContent-Security-Policy: default-src 'none'\nAccess-Control-Allow-Credentials: true\nAccess-Control-Expose-Headers: ETag, Link, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval\nAccess-Control-Allow-Origin: *\nX-GitHub-Request-Id: 805D3C4E:1649:62094B8:55ED706C\nStrict-Transport-Security: max-age=31536000; includeSubdomains; preload\nX-Content-Type-Options: nosniff\nVary: Accept-Encoding\nX-Served-By: d594a23ec74671eba905bf91ef329026\n" nil curl nil]
+
 
 (provide 'gh-api-lab)
 ;;; gh-api-lab.el ends here
