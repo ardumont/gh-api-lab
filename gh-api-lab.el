@@ -260,6 +260,12 @@ PRERELEASE represents the status of prerelease or not."
   (-> (gh-api-lab-delete-release-query owner repo id)
       (gh-api-lab-execute-query gh-api-lab--access-token)))
 
+;; (defun gh-api-lab-upload-asset (release-asset-url file)
+;;   "Given a RELEASE-ASSET-URL and a FILE, upload it.
+;; The asset url "
+;;   (-> (gh-api-lab-upload-asset-query release-asset-url file)
+;;       (gh-api-lab-execute-query gh-api-lab--access-token)))
+
 ;; retrieve id from output
 ;; (assoc-default 'id '((body . "this is the first release from emacs' repl")
 ;;                      (zipball_url . "https://api.github.com/repos/ardumont/gh-api-lab/zipball/0.0.0.2")
@@ -389,7 +395,6 @@ PRERELEASE represents the status of prerelease or not."
 ;;                                     ("Content-type" . "application/json"))
 ;;                                    :parser json-read :success gh-api-lab--success-callback :error gh-api-lab--error-callback :url "https://api.github.com/repos/ardumont/gh-api-lab/releases/1775274" :response #0)
 ;;                             #<killed buffer> "HTTP/1.1 204 No Content\nServer: GitHub.com\nDate: Mon, 07 Sep 2015 11:09:32 GMT\nStatus: 204 No Content\nX-RateLimit-Limit: 5000\nX-RateLimit-Remaining: 4994\nX-RateLimit-Reset: 1441627619\nX-OAuth-Scopes: repo\nX-Accepted-OAuth-Scopes: \nX-GitHub-Media-Type: github.v3\nX-XSS-Protection: 1; mode=block\nX-Frame-Options: deny\nContent-Security-Policy: default-src 'none'\nAccess-Control-Allow-Credentials: true\nAccess-Control-Expose-Headers: ETag, Link, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval\nAccess-Control-Allow-Origin: *\nX-GitHub-Request-Id: 805D3C4E:1649:62094B8:55ED706C\nStrict-Transport-Security: max-age=31536000; includeSubdomains; preload\nX-Content-Type-Options: nosniff\nVary: Accept-Encoding\nX-Served-By: d594a23ec74671eba905bf91ef329026\n" nil curl nil]
-
 
 (provide 'gh-api-lab)
 ;;; gh-api-lab.el ends here
