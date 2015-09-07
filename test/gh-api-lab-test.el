@@ -111,12 +111,12 @@
                                           ("tag_name" . "0.0.0.1"))
                                         'token) => '(+ 1 1))
                 (gh-api-lab-execute-query
-                 (gh-api-lab-api-release "ardumont" "gh-api-lab"
-                                         "0.0.0.1"
-                                         "master"
-                                         "first tryout"
-                                         "release notes should be here"
-                                         t)
+                 (gh-api-lab-api-create-release-query "ardumont" "gh-api-lab"
+                                                      "0.0.0.1"
+                                                      "master"
+                                                      "first tryout"
+                                                      "release notes should be here"
+                                                      t)
 
                  'token)))))
 
@@ -127,19 +127,19 @@
   (should (equal "params" (gethash :params (gh-api-lab-make-query "uri" "method" "body" "params"))))
   (should-not (gethash :params (gh-api-lab-make-query "uri" "method" "body"))))
 
-(ert-deftest test-gh-api-lab-api-create-release ()
+(ert-deftest test-gh-api-lab-api-create-release-query ()
   (should (equal "/repos/:owner/:repo/releases"
                  (gethash :uri (with-mock
                                  (mock (gh-api-lab-create-release-json :tag :branch :desc :body) => "body")
-                                 (gh-api-lab-api-create-release :owner :repo :tag :branch :desc :body)))))
+                                 (gh-api-lab-api-create-release-query :owner :repo :tag :branch :desc :body)))))
   (should (equal "POST"
                  (gethash :method (with-mock
                                     (mock (gh-api-lab-create-release-json :tag :branch :desc :body) => "body")
-                                    (gh-api-lab-api-create-release :owner :repo :tag :branch :desc :body)))))
+                                    (gh-api-lab-api-create-release-query :owner :repo :tag :branch :desc :body)))))
   (should (equal "body"
                  (gethash :body (with-mock
                                   (mock (gh-api-lab-create-release-json :tag :branch :desc :body) => "body")
-                                  (gh-api-lab-api-create-release :owner :repo :tag :branch :desc :body))))))
+                                  (gh-api-lab-api-create-release-query :owner :repo :tag :branch :desc :body))))))
 
 (ert-deftest test-gh-api-lab-create-release-json ()
   (should (equal '(("body" . "body") ("name" . "desc") ("target_commitish" . "branch") ("tag_name" . "tag"))
@@ -147,11 +147,11 @@
   (should (equal '(("body" . "body") ("name" . "desc") ("target_commitish" . "branch") ("tag_name" . "tag") ("draft" . t) ("prerelease" . t))
                  (gh-api-lab-create-release-json "tag" "branch" "desc" "body" "draft" "prerelease"))))
 
-(ert-deftest test-gh-api-lab-get-releases ()
-  (should (equal "/repos/user/repo/releases" (gethash :uri (gh-api-lab-get-releases "user" "repo"))))
-  (should (equal "GET" (gethash :method (gh-api-lab-get-releases "user" "repo"))))
-  (should-not (gethash :body (gh-api-lab-get-releases "user" "repo")))
-  (should-not (gethash :params (gh-api-lab-get-releases "user" "repo"))))
+(ert-deftest test-gh-api-lab-get-releases-query ()
+  (should (equal "/repos/user/repo/releases" (gethash :uri (gh-api-lab-get-releases-query "user" "repo"))))
+  (should (equal "GET" (gethash :method (gh-api-lab-get-releases-query "user" "repo"))))
+  (should-not (gethash :body (gh-api-lab-get-releases-query "user" "repo")))
+  (should-not (gethash :params (gh-api-lab-get-releases-query "user" "repo"))))
 
 
 (ert-deftest test-gh-api-lab-delete-release-query ()

@@ -185,7 +185,7 @@ Optional TOKEN for authentication."
     (puthash :params params h)
     h))
 
-(defun gh-api-lab-api-create-release (owner repo tag branch desc body &optional draft prerelease)
+(defun gh-api-lab-api-create-release-query (owner repo tag branch desc body &optional draft prerelease)
   "Create the api release call.
 OWNER owner of the repository REPO.
 TAG is the tag to create on BRANCH
@@ -197,7 +197,7 @@ PRERELEASE represents the status of prerelease or not."
                          "POST"
                          (gh-api-lab-create-release-json tag branch desc body)))
 
-(defun gh-api-lab-get-releases (owner repo)
+(defun gh-api-lab-get-releases-query (owner repo)
   "Create the api release query to list the releases of the OWNER/REPO."
   (gh-api-lab-make-query (format "/repos/%s/%s/releases" owner repo)
                          "GET"))
@@ -242,7 +242,7 @@ PRERELEASE represents the status of prerelease or not."
 
 (defun gh-api-lab-list-releases (owner repo)
   "List the releases of OWNER/REPO."
-  (-> (gh-api-lab-get-releases owner repo)
+  (-> (gh-api-lab-get-releases-query owner repo)
       (gh-api-lab-execute-query gh-api-lab--access-token)))
 
 (defun gh-api-lab-create-release (owner repo tag branch desc body &optional draft prerelease)
@@ -253,7 +253,7 @@ DESC is the summary on the release.
 BODY is the long description of the release.
 DRAFT represents the status of draft or not.
 PRERELEASE represents the status of prerelease or not."
-  (-> (gh-api-lab-api-create-release owner repo tag branch desc body draft prerelease)
+  (-> (gh-api-lab-api-create-release-query owner repo tag branch desc body draft prerelease)
       (gh-api-lab-execute-query gh-api-lab--access-token)))
 
 (defun gh-api-lab-delete-release (owner repo id)
